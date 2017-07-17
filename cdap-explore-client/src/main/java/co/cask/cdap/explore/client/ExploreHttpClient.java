@@ -201,6 +201,29 @@ abstract class ExploreHttpClient implements Explore {
                                              key, datasetInstance.toString(), response));
   }
 
+  protected QueryHandle doConcatenatePartition(DatasetId datasetInstance, DatasetSpecification spec, PartitionKey key)
+    throws ExploreException {
+
+    Map<String, String> args = new HashMap<>();
+    PartitionedFileSetArguments.setOutputPartitionKey(args, key);
+    String tableName = ExploreProperties.getExploreTableName(spec.getProperties());
+    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
+    if (tableName != null) {
+      args.put(ExploreProperties.PROPERTY_EXPLORE_TABLE_NAME, tableName);
+    }
+    if (databaseName != null) {
+      args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
+    }
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/concatenatePartition",
+                                                 datasetInstance.getNamespace(), datasetInstance.getEntityName()),
+                                   GSON.toJson(args), null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException(String.format("Cannot concatenate partition with key %s in dataset %s. Reason: %s",
+                                             key, datasetInstance.toString(), response));
+  }
+
   protected QueryHandle doUpdateExploreDataset(DatasetId datasetInstance,
                                                DatasetSpecification oldSpec,
                                                DatasetSpecification newSpec) throws ExploreException {

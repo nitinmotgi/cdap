@@ -126,6 +126,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
   protected final IndexedTable partitionsTable;
   protected final DatasetSpecification spec;
   protected final boolean isExternal;
+  private final boolean exploreEnabled;
   protected final Map<String, String> runtimeArguments;
   protected final Provider<ExploreFacade> exploreFacadeProvider;
   protected final Partitioning partitioning;
@@ -153,6 +154,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     this.partitionsTable = partitionTable;
     this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
+    this.exploreEnabled = FileSetProperties.isExploreEnabled(spec.getProperties());
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
     this.exploreFacadeProvider = exploreFacadeProvider;
@@ -511,7 +513,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @VisibleForTesting
   public void addPartitionToExplore(PartitionKey key, String path) {
-    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+    if (exploreEnabled) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
@@ -559,8 +561,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
   }
 
-  protected void dropPartitionFromExplore(PartitionKey key) {
-    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+  private void dropPartitionFromExplore(PartitionKey key) {
+    if (exploreEnabled) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
@@ -568,6 +570,29 @@ public class PartitionedFileSetDataset extends AbstractDataset
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to drop partition for key %s from explore table.", key.toString()), e);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void concatenatePartition(PartitionKey key) {
+    PartitionDetail partition = getPartition(key);
+    if (partition == null) {
+      throw new PartitionNotFoundException(key, getName());
+    }
+    concatenatePartitionInExplore(key);
+  }
+
+  private void concatenatePartitionInExplore(PartitionKey key) {
+    if (exploreEnabled) {
+      ExploreFacade exploreFacade = exploreFacadeProvider.get();
+      if (exploreFacade != null) {
+        try {
+          exploreFacade.concatenatePartition(datasetInstanceId, spec, key);
+        } catch (Exception e) {
+          throw new DataSetException(String.format(
+            "Unable to concatenate partition for key %s from explore table.", key.toString()), e);
         }
       }
     }

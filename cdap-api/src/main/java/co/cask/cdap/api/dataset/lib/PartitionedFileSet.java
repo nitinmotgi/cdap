@@ -93,6 +93,14 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   void dropPartition(PartitionKey key);
 
   /**
+   * TODO: javadocs.
+   *
+   * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
+   */
+  void concatenatePartition(PartitionKey key);
+
+  /**
    * Return the partition for a specific partition key, or null if key is not found.
    *
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset

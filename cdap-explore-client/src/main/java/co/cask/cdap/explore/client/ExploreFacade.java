@@ -190,6 +190,16 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getDataset());
   }
 
+  public void concatenatePartition(DatasetId datasetInstance, DatasetSpecification spec,
+                                   PartitionKey key) throws ExploreException, SQLException {
+    if (!exploreEnabled) {
+      return;
+    }
+
+    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, spec, key);
+    handleExploreFuture(futureSuccess, "concatenate", "partition", datasetInstance.getDataset());
+  }
+
   public void createNamespace(NamespaceMeta namespace) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;

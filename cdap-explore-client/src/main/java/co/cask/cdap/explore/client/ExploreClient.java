@@ -148,6 +148,18 @@ public interface ExploreClient extends Closeable {
   ListenableFuture<Void> dropPartition(DatasetId datasetInstance,
                                        DatasetSpecification spec, PartitionKey key);
 
+  // TODO: javadocs
+  /**
+   * Drop a partition from a dataset's table.
+   *
+   * @param datasetInstance instance of the dataset
+   * @param key the partition key
+   * @return a {@code Future} object that can either successfully complete, or enters a failed state, depending on
+   *         the success of the operation
+   */
+  ListenableFuture<Void> concatenatePartition(DatasetId datasetInstance,
+                                              DatasetSpecification spec, PartitionKey key);
+
   /**
    * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the
    * schema of the operation, and it contains an iterator on the results of the statement.
