@@ -196,7 +196,7 @@ public class ExploreFacade {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, spec, key);
+    ListenableFuture<Void> futureSuccess = exploreClient.concatenatePartition(datasetInstance, spec, key);
     handleExploreFuture(futureSuccess, "concatenate", "partition", datasetInstance.getDataset());
   }
 

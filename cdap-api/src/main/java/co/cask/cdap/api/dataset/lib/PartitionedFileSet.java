@@ -93,7 +93,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   void dropPartition(PartitionKey key);
 
   /**
-   * TODO: javadocs.
+   * Concatenates the partition in Hive. If this Dataset is not enabled for Explore, this operation is a no-op.
    *
    * @throws PartitionNotFoundException when a partition for the given key is not found
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset

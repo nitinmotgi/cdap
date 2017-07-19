@@ -378,10 +378,8 @@ public class ExploreTableManager {
     return exploreService.execute(datasetId.getParent(), dropPartitionStatement, IMMEDIATE_TIMEOUT_CONF);
   }
 
-  // TODO: sync or async?
-  // TODO: javadocs
   /**
-   * Drop a partition from the Hive table for the given dataset.
+   * Concatenates the partition in the Hive table for the given dataset.
    *
    * @param datasetId the ID of the dataset to drop the partition from
    * @param properties additional dataset properties relevant to this operation

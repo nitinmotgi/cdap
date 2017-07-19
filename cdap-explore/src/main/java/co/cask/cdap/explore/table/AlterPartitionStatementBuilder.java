@@ -105,5 +105,4 @@ public class AlterPartitionStatementBuilder {
     builder.append(")");
     return builder.toString();
   }
-
 }

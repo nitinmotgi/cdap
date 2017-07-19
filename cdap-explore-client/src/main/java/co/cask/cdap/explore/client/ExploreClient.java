@@ -148,9 +148,8 @@ public interface ExploreClient extends Closeable {
   ListenableFuture<Void> dropPartition(DatasetId datasetInstance,
                                        DatasetSpecification spec, PartitionKey key);
 
-  // TODO: javadocs
   /**
-   * Drop a partition from a dataset's table.
+   * Concatenates the partition in the Hive table for the given dataset.
    *
    * @param datasetInstance instance of the dataset
    * @param key the partition key
