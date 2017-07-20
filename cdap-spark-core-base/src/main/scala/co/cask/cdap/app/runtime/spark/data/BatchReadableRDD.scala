@@ -45,11 +45,11 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkCo
 
   override protected def getPartitions: Array[Partition] = {
     val inputSplits: Iterable[_ <: Split] = splits.getOrElse(batchReadable.getSplits.toIterable)
-    inputSplits.zipWithIndex.map(t => new BatchReadablePartition(id, t._2, t._1)).toArray
+    inputSplits.zipWithIndex.map(t => new SplitPartition(id, t._2, t._1)).toArray
   }
 
   override def compute(partition: Partition, context: TaskContext): Iterator[(K, V)] = {
-    val split = partition.asInstanceOf[BatchReadablePartition].split
+    val split = partition.asInstanceOf[SplitPartition].split
     val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
 
     val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache

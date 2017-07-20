@@ -23,12 +23,12 @@ import com.google.gson.Gson
 import org.apache.spark.Partition
 
 /**
-  * Represents one [[org.apache.spark.Partition]] in the [[co.cask.cdap.app.runtime.spark.data.BatchReadableRDD]], which
+  * Represents one [[org.apache.spark.Partition]] in [[org.apache.spark.rdd.RDD]], which
   * corresponds to one [[co.cask.cdap.api.data.batch.Split]].
   */
-class BatchReadablePartition(private var _rddId: Int,
-                             private var _index: Int,
-                             private var _split: Split) extends Partition with Externalizable {
+class SplitPartition(private var _rddId: Int,
+                     private var _index: Int,
+                     private var _split: Split) extends Partition with Externalizable {
 
   /**
     * Default constructor. It is only for the deserialization
@@ -59,11 +59,11 @@ class BatchReadablePartition(private var _rddId: Int,
     _split = new Gson().fromJson(in.readUTF(), splitClass)
   }
 
-  def canEqual(other: Any): Boolean = other.isInstanceOf[BatchReadablePartition]
+  def canEqual(other: Any): Boolean = other.isInstanceOf[SplitPartition]
 
   override def equals(other: Any): Boolean = {
     other match {
-      case that: BatchReadablePartition =>
+      case that: SplitPartition =>
         (that canEqual this) &&
           _rddId == that._rddId &&
           _index == that._index &&
