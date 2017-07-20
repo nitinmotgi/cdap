@@ -19,11 +19,25 @@ package co.cask.cdap.api.dataset.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * Table splits are simply a start and stop key.
  */
 public class TableSplit extends Split {
-  private final byte[] start, stop;
+
+  private byte[] start, stop;
+
+  /**
+   * Constructor for serialization only. Don't call directly.
+   */
+  public TableSplit() {
+    // No-op
+  }
 
   public TableSplit(byte[] start, byte[] stop) {
     this.start = start;
@@ -44,5 +58,39 @@ public class TableSplit extends Split {
       "start=" + Bytes.toStringBinary(start) +
       ", stop=" + Bytes.toStringBinary(stop) +
       '}';
+  }
+
+  @Override
+  public void writeExternal(DataOutput out) throws IOException {
+    out.writeInt(start.length);
+    out.write(start);
+    out.writeInt(stop.length);
+    out.write(stop);
+  }
+
+  @Override
+  public void readExternal(DataInput in) throws IOException {
+    start = new byte[in.readInt()];
+    in.readFully(start);
+
+    stop = new byte[in.readInt()];
+    in.readFully(stop);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TableSplit that = (TableSplit) o;
+    return Arrays.equals(start, that.start) && Arrays.equals(stop, that.stop);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(start, stop);
   }
 }
