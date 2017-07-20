@@ -520,6 +520,9 @@ public class PartitionedFileSetTest {
         PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
         Assert.assertNotNull(partitionDetail);
         long creationTime = partitionDetail.getMetadata().getCreationTime();
+        long lastUpdatedTime = partitionDetail.getMetadata().getLastUpdatedTime();
+        // lastUpdated time should be equal to creationTime for a partition that has not been appended to
+        Assert.assertEquals(creationTime, lastUpdatedTime);
         Assert.assertTrue(creationTime >= beforeTime && creationTime <= afterTime);
       }
     });

@@ -68,6 +68,8 @@ public class DataCleansingService extends AbstractService {
     @POST
     @Path("/records/raw")
     public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder) {
+      // TODO: attempting to write to a partition that already exists will fail and the rollback will remove the
+      // existing files!!!
       PartitionKey key = PartitionKey.builder().addLongField("time", System.currentTimeMillis()).build();
       final PartitionOutput partitionOutput = rawRecords.getPartitionOutput(key);
       final Location location = partitionOutput.getLocation();

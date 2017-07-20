@@ -143,6 +143,23 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    */
   PartitionOutput getPartitionOutput(PartitionKey key);
 
+  // Unrelated to partition-append: If someone uses getPartitionOutput(), and then writes to that location, and then
+  // attempts to add, it'll fail because the partition already exists.
+
+  // TODO: the IllegalArgumentException is actually currently thrown by the PartitionOutput#addPartition
+  // TODO: the IllegalStateException is actually currently thrown by the PartitionOutput#addPartition
+  // TODO: add detail that the partition must exist?
+  /**
+   * Return a partition output for a specific partition key, in preparation for appending to an existing partition.
+   * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
+   * to add the partition to this dataset.
+   *
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
+   * @throws IllegalStateException if this PartitionedFileSet is not configured to allow appending.
+   *                               See {@link PartitionedFileSetProperties#isAppendAllowed(Map) for more information}.
+   */
+  PartitionOutput getPartitionOutputForAppending(PartitionKey key);
+
   /**
    * @return the underlying (embedded) file set.
    */

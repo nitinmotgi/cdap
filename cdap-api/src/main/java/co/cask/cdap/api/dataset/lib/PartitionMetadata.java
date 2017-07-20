@@ -27,11 +27,13 @@ import javax.annotation.Nullable;
  */
 public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
   private final Map<String, String> metadata;
-  private final Long creationTime;
+  private final long creationTime;
+  private final long lastUpdatedTime;
 
-  public PartitionMetadata(Map<String, String> metadata, long creationTime) {
+  public PartitionMetadata(Map<String, String> metadata, long creationTime, long lastUpdatedTime) {
     this.metadata = Collections.unmodifiableMap(new HashMap<>(metadata));
     this.creationTime = creationTime;
+    this.lastUpdatedTime = lastUpdatedTime;
   }
 
   /**
@@ -59,6 +61,13 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
     return creationTime;
   }
 
+  /**
+   * @return the last updated time of the partition, in milliseconds
+   */
+  public long getLastUpdatedTime() {
+    return lastUpdatedTime;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -68,14 +77,23 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
       return false;
     }
 
-    PartitionMetadata that = (PartitionMetadata) o;
+    PartitionMetadata entries = (PartitionMetadata) o;
+    if (creationTime != entries.creationTime) {
+      return false;
+    }
+    if (lastUpdatedTime != entries.lastUpdatedTime) {
+      return false;
+    }
+    return metadata.equals(entries.metadata);
 
-    return this.metadata.equals(that.metadata) && this.creationTime.equals(that.creationTime);
   }
 
   @Override
   public int hashCode() {
-    return metadata.hashCode() + 31 * creationTime.hashCode();
+    int result = metadata.hashCode();
+    result = 31 * result + (int) (creationTime ^ (creationTime >>> 32));
+    result = 31 * result + (int) (lastUpdatedTime ^ (lastUpdatedTime >>> 32));
+    return result;
   }
 
   @Override

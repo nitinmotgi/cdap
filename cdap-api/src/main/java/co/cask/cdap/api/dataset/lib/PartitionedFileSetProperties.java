@@ -39,6 +39,11 @@ public class PartitionedFileSetProperties extends FileSetProperties {
   public static final String PARTITIONING_FIELD_PREFIX = "partitioning.field.";
 
   /**
+   * The property name for whether or not to allow appending to a partition.
+   */
+  public static final String APPEND_ALLOWED = "append.allowed";
+
+  /**
    * Read the partitioning for a PartitionedFileSet from its properties.
    *
    * @param properties the dataset properties
@@ -72,6 +77,15 @@ public class PartitionedFileSetProperties extends FileSetProperties {
   }
 
   /**
+   * @return whether or not appending to a partition is allowed.
+   */
+  public static boolean isAppendAllowed(Map<String, String> properties) {
+    // TODO: test case?
+    // defaults to false, if APPEND_ALLOWED not in properties
+    return Boolean.valueOf(properties.get(APPEND_ALLOWED));
+  }
+
+  /**
    * @return a properties builder
    */
   public static Builder builder() {
@@ -102,6 +116,14 @@ public class PartitionedFileSetProperties extends FileSetProperties {
       for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
         add(PARTITIONING_FIELD_PREFIX + entry.getKey(), entry.getValue().name());
       }
+      return this;
+    }
+
+    /**
+     * Sets whether or not to allow appending to a partition.
+     */
+    public Builder allowPartitionAppend(boolean allowAppend) {
+      add(APPEND_ALLOWED, Boolean.toString(allowAppend));
       return this;
     }
 

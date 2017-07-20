@@ -113,4 +113,17 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * @param time the partition time in milliseconds since the Epoch
    */
   TimePartitionOutput getPartitionOutput(long time);
+
+  /**
+   * Return a partition output for a specific time, rounded to the minute, in preparation for appending to an existing
+   * partition.
+   * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
+   * to add the partition to this dataset.
+   *
+   * @param time the partition time in milliseconds since the Epoch
+   * @throws IllegalStateException if this TimePartitionedFileSet is not configured to allow appending.
+   *                               See {@link PartitionedFileSetProperties#isAppendAllowed(Map) for more information}.
+   *
+   */
+  TimePartitionOutput getPartitionOutputForAppending(long time);
 }

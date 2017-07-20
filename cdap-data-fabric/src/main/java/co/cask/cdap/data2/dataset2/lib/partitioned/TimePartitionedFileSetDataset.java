@@ -144,12 +144,21 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   @Override
   public TimePartitionOutput getPartitionOutput(long time) {
+    return getPartitionOutput(time, false);
+  }
+
+  @Override
+  public TimePartitionOutput getPartitionOutputForAppending(long time) {
+    return getPartitionOutput(time, true);
+  }
+
+  private TimePartitionOutput getPartitionOutput(long time, boolean appending) {
     if (isExternal) {
       throw new UnsupportedOperationException(
         "Output is not supported for external time-partitioned file set '" + spec.getName() + "'");
     }
     PartitionKey key = partitionKeyForTime(time);
-    return new BasicTimePartitionOutput(this, getOutputPath(key), key);
+    return new BasicTimePartitionOutput(this, getOutputPath(key), key, appending);
   }
 
   @Override
@@ -188,6 +197,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
       .build();
   }
 
+  // TODO: its not even being used in test cases!
   @VisibleForTesting
   static long timeForPartitionKey(PartitionKey key) {
     int year = (Integer) key.getField(FIELD_YEAR);
@@ -409,8 +419,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     private final Long time;
 
     private BasicTimePartitionOutput(TimePartitionedFileSetDataset timePartitionedFileSetDataset, String relativePath,
-                                     PartitionKey key) {
-      super(timePartitionedFileSetDataset, relativePath, key);
+                                     PartitionKey key, boolean appending) {
+      super(timePartitionedFileSetDataset, relativePath, key, appending);
       this.time = timeForPartitionKey(key);
     }
 
@@ -418,6 +428,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     public long getTime() {
       return time;
     }
+
+    // TODO: implement equals/hashcode?
   }
 
 }
