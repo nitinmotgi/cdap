@@ -29,21 +29,7 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionMetadata;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.lib.*;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.api.dataset.table.Put;
@@ -316,14 +302,13 @@ public class PartitionedFileSetDataset extends AbstractDataset
   }
 
   private void addPartition(PartitionKey key, String path, Map<String, String> metadata, boolean filesCreated) {
-    AddPartitionOperation operation = new AddPartitionOperation(key, path, filesCreated);
-    operationsInThisTx.add(operation);
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (!row.isEmpty()) {
-      throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
-                                               getName(), key.toString()));
+      throw new PartitionAlreadyExistsException(getName(), key);
     }
+    AddPartitionOperation operation = new AddPartitionOperation(key, path, filesCreated);
+    operationsInThisTx.add(operation);
     LOG.debug("Adding partition with key {} and path {} to dataset {}", key, path, getName());
     Put put = new Put(rowKey);
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
@@ -343,6 +328,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     addPartitionToExplore(key, path);
     operation.setExplorePartitionCreated();
   }
+
 
   @ReadWrite
   @Override
@@ -580,7 +566,16 @@ public class PartitionedFileSetDataset extends AbstractDataset
       throw new UnsupportedOperationException(
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
+    assertNotExists(key);
     return new BasicPartitionOutput(this, getOutputPath(key), key);
+  }
+
+  void assertNotExists(PartitionKey key) {
+    byte[] rowKey = generateRowKey(key, partitioning);
+    Row row = partitionsTable.get(rowKey);
+    if (!row.isEmpty()) {
+      throw new PartitionAlreadyExistsException(getName(), key);
+    }
   }
 
   @ReadOnly
@@ -839,6 +834,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
+    } else {
+      assertNotExists(outputKey);
     }
     return ImmutableMap.copyOf(outputArgs);
   }

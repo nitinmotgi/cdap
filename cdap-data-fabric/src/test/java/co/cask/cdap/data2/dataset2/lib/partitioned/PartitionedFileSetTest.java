@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -690,7 +691,6 @@ public class PartitionedFileSetTest {
     PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
     TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
 
-    // because the previous transaction aborted, the partition as well as the file will not exist
     txContext.start();
 
     Assert.assertNull(pfs.getPartition(PARTITION_KEY));
@@ -716,6 +716,61 @@ public class PartitionedFileSetTest {
 
     // the file shouldn't exist because the transaction was aborted (AND because it was dropped at the end of the tx)
     Assert.assertFalse(outputLocation.exists());
+  }
+
+  @Test
+  public void testRollbackOfPartitionCreateWhereItAlreadyExisted() throws Exception {
+    // if you attempt to add a partition X, and it already existed, the transaction rollback should not remove
+    // the files of the original, existing partition X.
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+    TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
+
+    txContext.start();
+    Assert.assertNull(pfs.getPartition(PARTITION_KEY));
+    Location file1Location = createPartition(pfs, PARTITION_KEY, "file1");
+    Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+    txContext.finish();
+
+    // the file should exist because the transaction completed successfully
+    Assert.assertTrue(file1Location.exists());
+
+    // WIP:
+    txContext.start();
+    Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+
+    try {
+      // PartitionedFileSet#getPartitionOutput should fail
+      createPartition(pfs, PARTITION_KEY, "file2");
+      Assert.fail("Expected PartitionAlreadyExistsException");
+    } catch (PartitionAlreadyExistsException expected) {
+    }
+    // because of the above failure, we want to abort and rollback the transaction
+    txContext.abort();
+
+    // the file should still exist because the aborted transaction should've failed before even needing to rollback
+    // the partition's files
+    Assert.assertTrue(file1Location.exists());
+
+    // file2 shouldn't exist
+    txContext.start();
+    Assert.assertFalse(pfs.getPartition(PARTITION_KEY).getLocation().append("file2").exists());
+    txContext.finish();
+  }
+
+  // creates a file under the partition path for the given key and adds it to the PartitionedFileSet
+  private Location createPartition(PartitionedFileSet pfs, PartitionKey key, String fileName) throws IOException {
+    PartitionOutput partitionOutput = pfs.getPartitionOutput(key);
+    Location outputLocation = partitionOutput.getLocation().append(fileName);
+    Assert.assertFalse(outputLocation.exists());
+
+    try (OutputStream outputStream = outputLocation.getOutputStream()) {
+      // create and write 1 to the file
+      outputStream.write(1);
+    }
+    Assert.assertTrue(outputLocation.exists());
+
+    partitionOutput.addPartition();
+    return outputLocation;
   }
 
   @Test
