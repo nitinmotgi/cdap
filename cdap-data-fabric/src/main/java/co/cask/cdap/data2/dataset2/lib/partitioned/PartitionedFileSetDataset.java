@@ -29,7 +29,22 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
-import co.cask.cdap.api.dataset.lib.*;
+import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
+import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
+import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.PartitionFilter;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionMetadata;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.api.dataset.table.Put;
@@ -328,7 +343,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     addPartitionToExplore(key, path);
     operation.setExplorePartitionCreated();
   }
-
 
   @ReadWrite
   @Override
