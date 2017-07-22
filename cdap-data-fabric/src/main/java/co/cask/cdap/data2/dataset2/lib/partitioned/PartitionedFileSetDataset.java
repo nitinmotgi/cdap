@@ -575,6 +575,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
   }
 
+  @ReadWrite
   @Override
   public void concatenatePartition(PartitionKey key) {
     PartitionDetail partition = getPartition(key);
