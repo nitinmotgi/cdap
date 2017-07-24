@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.app.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
@@ -167,7 +167,7 @@ public class MasterTwillApplication implements TwillApplication {
           .add(TwillSpecification.PlacementPolicy.Type.DISTRIBUTED, Constants.Service.STREAMS)
         .withOrder()
           .begin(Constants.Service.MESSAGING_SERVICE, Constants.Service.TRANSACTION, Constants.Service.DATASET_EXECUTOR)
-        .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
+        .withEventHandler(new TwillAppLifecycleEventHandler(noContainerTimeout))
         .build();
   }
 

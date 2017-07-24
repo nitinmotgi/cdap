@@ -88,8 +88,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         components.put(program.getName(), instanceId, controller);
       }
 
-      ProgramController controller = new InMemoryProgramController(components, program, runId, options);
-      return addStateChangeListener(controller);
+      return addStateChangeListener(new InMemoryProgramController(components, program, runId, options));
     } catch (Throwable t) {
       LOG.error("Failed to start all program instances", t);
       try {
