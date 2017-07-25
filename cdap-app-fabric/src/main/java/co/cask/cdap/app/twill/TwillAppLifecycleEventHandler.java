@@ -130,14 +130,19 @@ public class TwillAppLifecycleEventHandler extends EventHandler {
     programStateWriter.running(TwillAppNames.fromTwillAppName(twillAppName).run(runId), twillRunId.getId());
   }
 
-  public void containerLaunched(String twillAppName, RunId twillRunId, int instanceId) {
-    // no-op
+//  @Override
+  public void containerLaunched(String twillAppName, RunId runId, String runnableName,
+                                int instanceId, String containerId) {
+    // No-op
   }
 
-  public void containerStopped(String twillAppName, RunId tiwllRunId, int instanceId, String containerId) {
-    // no-op
+//  @Override
+  public void containerStopped(String twillAppName, RunId runId, String runnableName,
+                               int instanceId, String containerId) {
+    // No-op
   }
 
+//  @Override
   public void completed(String twillAppName, RunId twillRunId) {
     if (options == null) {
       return;
@@ -146,11 +151,21 @@ public class TwillAppLifecycleEventHandler extends EventHandler {
     programStateWriter.completed(TwillAppNames.fromTwillAppName(twillAppName).run(runId));
   }
 
+//  @Override
   public void killed(String twillAppName, RunId twillRunId) {
     if (options == null) {
       return;
     }
     String runId = options.getArguments().getOption(ProgramOptionConstants.RUN_ID);
     programStateWriter.killed(TwillAppNames.fromTwillAppName(twillAppName).run(runId));
+  }
+
+//  @Override
+  public void aborted(String twillAppName, RunId twillRunId) {
+    if (options == null) {
+      return;
+    }
+    String runId = options.getArguments().getOption(ProgramOptionConstants.RUN_ID);
+    programStateWriter.error(TwillAppNames.fromTwillAppName(twillAppName).run(runId), new Exception("Timeout"));
   }
 }

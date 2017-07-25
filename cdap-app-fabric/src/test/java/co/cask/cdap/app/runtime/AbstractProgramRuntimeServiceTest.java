@@ -41,6 +41,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -133,7 +134,7 @@ public class AbstractProgramRuntimeServiceTest {
     Service service = new TestService();
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
-    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId);
+    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId.run(runId));
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
@@ -243,11 +244,12 @@ public class AbstractProgramRuntimeServiceTest {
         return new ProgramRunner() {
           @Override
           public ProgramController run(Program program, ProgramOptions options) {
-            argumentsMap.put(program.getId(), options.getUserArguments());
+            ProgramId programId = program.getId();
+            argumentsMap.put(programId, options.getUserArguments());
 
             Service service = new FastService();
-            ProgramController controller = new ProgramControllerServiceAdapter(service, program.getId(),
-                                                                               RunIds.generate());
+            ProgramController controller = new ProgramControllerServiceAdapter(service,
+                                                                               programId.run(RunIds.generate()));
             service.start();
             return controller;
           }
@@ -316,9 +318,9 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
-                                                              final ProgramId programId, RunId runId) {
+                                                              final ProgramRunId programRunId) {
     final ProgramControllerServiceAdapter controller =
-      new ProgramControllerServiceAdapter(service, programId, runId);
+      new ProgramControllerServiceAdapter(service, programRunId);
     return new ProgramRuntimeService.RuntimeInfo() {
       @Override
       public ProgramController getController() {
@@ -327,12 +329,12 @@ public class AbstractProgramRuntimeServiceTest {
 
       @Override
       public ProgramType getType() {
-        return programId.getType();
+        return programRunId.getType();
       }
 
       @Override
       public ProgramId getProgramId() {
-        return programId;
+        return programRunId.getParent();
       }
 
       @Nullable

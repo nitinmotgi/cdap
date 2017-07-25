@@ -100,7 +100,7 @@ final class ImpersonatedTwillController implements TwillController {
     }
   }
 
-  @Override
+//  @Override
   public Future<String> restartAllInstances(String runnable) {
     return delegate.restartAllInstances(runnable);
   }
@@ -113,6 +113,11 @@ final class ImpersonatedTwillController implements TwillController {
   @Override
   public Future<String> restartInstances(String runnable, int instanceId, int... moreInstanceIds) {
     return delegate.restartInstances(runnable, instanceId, moreInstanceIds);
+  }
+
+//  @Override
+  public Future<String> restartInstances(String runnable, Set<Integer> instanceIds) {
+    return null;
   }
 
   @Override

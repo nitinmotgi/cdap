@@ -26,16 +26,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -50,14 +46,11 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
@@ -79,7 +72,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -202,7 +194,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                                     authenticationContext);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
-      final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
+      ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
       LOG.debug("Starting MapReduce Job: {}", context);
       // if security is not enabled, start the job as the user we're using to access hdfs with.

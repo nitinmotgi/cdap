@@ -134,7 +134,10 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                  txClient, runtimeStore, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService, programStateWriter);
 
-      ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
+      // Controller needs to be created before starting the driver so that the state change of the driver
+      // service can be fully captured by the controller.
+      ProgramController controller = new WorkflowProgramController(program.getId().run(runId), driver,
+                                                                   serviceAnnouncer);
       driver.start();
       return controller;
     } catch (Exception e) {

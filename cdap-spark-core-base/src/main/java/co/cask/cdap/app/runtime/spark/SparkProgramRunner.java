@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
@@ -42,6 +43,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.program.StateChangeListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -86,7 +88,8 @@ import javax.annotation.Nullable;
 /**
  * The {@link ProgramRunner} that executes Spark program.
  */
-final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implements Closeable {
+final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
+  implements Closeable, ProgramClassLoaderProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
@@ -103,6 +106,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -111,7 +115,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                     MessagingService messagingService) {
+                     MessagingService messagingService, ProgramStateWriter programStateWriter) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -126,6 +130,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
+    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -195,6 +200,11 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
+      controller.addListener(
+        new StateChangeListener(program.getId().run(runId),
+                                options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID),
+                                programStateWriter),
+        Threads.SAME_THREAD_EXECUTOR);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (SparkRuntimeContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
@@ -262,5 +272,10 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
         closeAll(closeables);
       }
     };
+  }
+
+  @Override
+  public ClassLoader createProgramClassLoaderParent() {
+    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
   }
 }

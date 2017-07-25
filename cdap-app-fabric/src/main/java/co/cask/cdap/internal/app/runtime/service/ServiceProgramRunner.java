@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
@@ -134,8 +135,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-
-      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
+      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId),
                                                                          spec.getName() + "-" + instanceId);
       component.start();
       return controller;
@@ -148,9 +148,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId,
-                                    RunId runId, String componentName) {
-      super(service, programId, runId, componentName);
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramRunId programRunId, String componentName) {
+      super(service, programRunId, componentName);
       this.service = service;
     }
 

@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
@@ -139,7 +140,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId().run(runId),
                                                                         workerSpec.getName() + "-" + instanceId);
       worker.start();
       return controller;
@@ -152,8 +153,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramId programId, RunId runId, String componentName) {
-      super(workerDriver, programId, runId, componentName);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramRunId programRunId, String componentName) {
+      super(workerDriver, programRunId, componentName);
       this.workerDriver = workerDriver;
     }
 

@@ -314,7 +314,7 @@ class ConstraintCheckerService extends AbstractIdleService {
         LOG.debug("Skip launching job {} because the program {} it tries to launch no longer exists",
                   job.getJobKey(), job.getSchedule().getProgramId());
       }
-        // this should not have a conflict, because any updates to the job will first check to make sure that
+      // this should not have a conflict, because any updates to the job will first check to make sure that
       // it is not PENDING_LAUNCH
       jobQueue.deleteJob(job);
       return true;
