@@ -64,6 +64,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Provider;
@@ -85,6 +87,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -577,25 +580,20 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @ReadWrite
   @Override
-  public void concatenatePartition(PartitionKey key) {
+  public Future<Void> concatenatePartition(PartitionKey key) {
     PartitionDetail partition = getPartition(key);
     if (partition == null) {
       throw new PartitionNotFoundException(key, getName());
     }
-    concatenatePartitionInExplore(key);
-  }
-
-  private void concatenatePartitionInExplore(PartitionKey key) {
-    if (exploreEnabled) {
-      ExploreFacade exploreFacade = exploreFacadeProvider.get();
-      if (exploreFacade != null) {
-        try {
-          exploreFacade.concatenatePartition(datasetInstanceId, spec, key);
-        } catch (Exception e) {
-          throw new DataSetException(String.format(
-            "Unable to concatenate partition for key %s from explore table.", key.toString()), e);
-        }
+    try {
+      if (exploreEnabled) {
+        return exploreFacadeProvider.get().concatenatePartition(datasetInstanceId, spec, key);
+      } else {
+        return Futures.immediateFuture(null);
       }
+    } catch (Exception e) {
+      throw new DataSetException(String.format(
+        "Unable to concatenate partition for key %s from explore table.", key.toString()), e);
     }
   }
 
