@@ -99,7 +99,7 @@ public class PartitionConcatenateTest extends TestFrameworkTestBase {
     }
 
     // 2. run the concatenate operation
-    cleanRecords.concatenatePartition(outputPartition);
+    cleanRecords.concatenatePartition(outputPartition).get();
 
     // 3. check that the data files' lastModified timestamp is updated, and there should be fewer of them
     dataFiles = listFilteredChildren(partitionLocation);
