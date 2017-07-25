@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import com.google.common.base.Throwables;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +68,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   private final Path jobSpecificOutputPath;
 
   private PartitionedFileSet outputDataset;
-  private Set<String> relativePaths;
+  private Map<String, PartitionKey> partitionsToAdd;
 
   // Note that the outputPath passed in is treated as a temporary directory.
   // The commitJob method moves the files from within this directory to an parent (final) directory.
@@ -87,8 +89,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     outputDataset = taskContext.getDataset(outputDatasetName);
     Partitioning partitioning = outputDataset.getPartitioning();
 
-    Set<PartitionKey> partitionsToAdd = new HashSet<>();
-    relativePaths = new HashSet<>();
+    partitionsToAdd = new HashMap<>();
     // Go over all files in the temporary directory and keep track of partitions to add for them
     FileStatus[] allCommittedTaskPaths = getAllCommittedTaskPaths(context);
     for (FileStatus committedTaskPath : allCommittedTaskPaths) {
@@ -109,15 +110,13 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
         // relativeDir = "../key1/key2"
         // fileName = "part-m-00000"
         String relativeDir = relativePath.substring(0, lastPathSepIdx);
-        String fileName = relativePath.substring(lastPathSepIdx + 1);
 
         Path finalDir = new Path(FileOutputFormat.getOutputPath(context), relativeDir);
         if (fs.exists(finalDir)) {
           throw new FileAlreadyExistsException("Final output path " + finalDir + " already exists");
         }
         PartitionKey partitionKey = getPartitionKey(partitioning, relativeDir);
-        partitionsToAdd.add(partitionKey);
-        relativePaths.add(relativeDir);
+        partitionsToAdd.put(relativeDir, partitionKey);
       }
     }
 
@@ -125,6 +124,8 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     // the original outputDir.
     Path finalOutput = FileOutputFormat.getOutputPath(context);
     FileSystem fs = finalOutput.getFileSystem(configuration);
+    // TODO: we can keep track of what all were the files written in this job
+    // TODO: what about naming conflicts
     for (FileStatus stat : getAllCommittedTaskPaths(context)) {
       mergePaths(fs, stat, finalOutput);
     }
@@ -136,8 +137,9 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
                                                PartitionedFileSetArguments.OUTPUT_PARTITION_METADATA_PREFIX);
 
     // create all the necessary partitions
-    for (PartitionKey partitionKey : partitionsToAdd) {
-      PartitionOutput partitionOutput = outputDataset.getPartitionOutput(partitionKey);
+    for (Map.Entry<String, PartitionKey> entry : partitionsToAdd.entrySet()) {
+//      outputDataset.addPartition(entry.getValue(), entry.getKey(), metadata);
+      PartitionOutput partitionOutput = outputDataset.getPartitionOutputForAppending(entry.getValue());
       partitionOutput.setMetadata(metadata);
       partitionOutput.addPartition();
     }
@@ -155,7 +157,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
     // mark all the final output paths with a _SUCCESS file, if configured to do so (default = true)
     if (configuration.getBoolean(SUCCESSFUL_JOB_OUTPUT_DIR_MARKER, true)) {
-      for (String relativePath : relativePaths) {
+      for (String relativePath : partitionsToAdd.keySet()) {
         Path pathToMark = new Path(finalOutput, relativePath);
         Path markerPath = new Path(pathToMark, SUCCEEDED_FILE_NAME);
         fs.createNewFile(markerPath);
@@ -202,8 +204,9 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
         }
 
         // if this is non-null, then at least some paths have been created. We need to remove them
-        if (relativePaths != null) {
-          for (String pathToDelete : relativePaths) {
+        if (partitionsToAdd != null) {
+          // TODO: we don't want to rollback upon append?
+          for (String pathToDelete : partitionsToAdd.keySet()) {
             Location locationToDelete = outputDataset.getEmbeddedFileSet().getLocation(pathToDelete);
             try {
               if (locationToDelete.exists()) {
@@ -218,7 +221,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       } finally {
         // clear this so that we only attempt rollback once in case it gets called multiple times
         outputDataset = null;
-        relativePaths = null;
+        partitionsToAdd = null;
       }
     }
     super.abortJob(context, state);

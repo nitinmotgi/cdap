@@ -42,6 +42,7 @@ final class MultiWriter<K, V> extends DynamicPartitionerWriterWrapper<K, V> {
     PartitionKey partitionKey = dynamicPartitioner.getPartitionKey(key, value);
     RecordWriter<K, V> rw = this.recordWriters.get(partitionKey);
     if (rw == null) {
+      // TODO: check against existence of PartitionKey?
       // if we don't have the record writer yet for the final path, create one and add it to the cache
       TaskAttemptContext taskAttemptContext = getKeySpecificContext(partitionKey);
       rw = getBaseRecordWriter(taskAttemptContext);
