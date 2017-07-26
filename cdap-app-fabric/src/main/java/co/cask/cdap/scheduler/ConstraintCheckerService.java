@@ -20,7 +20,9 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -300,6 +302,12 @@ class ConstraintCheckerService extends AbstractIdleService {
       try {
         taskRunner.launch(job);
       } catch (TaskExecutionException e) {
+        if (!(e.getCause() instanceof ProgramNotFoundException
+          || e.getCause() instanceof ApplicationNotFoundException)) {
+          // Only catch the TaskExecutionException if its cause is ProgramNotFoundException
+          // or ApplicationNotFoundException
+          throw e;
+        }
         // This can happen when the app containing the program is deleted, but the job is already in
         // PENDING_LAUNCH state, so the job is not marked as to be deleted. Simply catch the TaskExecutionException
         // to skip retrying on failure and continue to delete this job
