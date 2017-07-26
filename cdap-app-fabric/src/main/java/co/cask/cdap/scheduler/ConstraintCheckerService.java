@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
+import co.cask.cdap.internal.app.runtime.schedule.TaskExecutionException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
@@ -296,7 +297,15 @@ class ConstraintCheckerService extends AbstractIdleService {
         return true;
       }
 
-      taskRunner.launch(job);
+      try {
+        taskRunner.launch(job);
+      } catch (TaskExecutionException e) {
+        // This can happen when the app containing the program is deleted, but the job is already in
+        // PENDING_LAUNCH state, so the job is not marked as to be deleted. Simply catch the TaskExecutionException
+        // to skip retrying on failure and continue to delete this job
+        LOG.debug("Skip launching job {} because the program {} it tries to launch no longer exists",
+                  job.getJobKey(), job.getSchedule().getProgramId());
+      }
       // this should not have a conflict, because any updates to the job will first check to make sure that
       // it is not PENDING_LAUNCH
       jobQueue.deleteJob(job);
