@@ -85,6 +85,10 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
                                 type, ProgramType.SPARK);
 
     switch (mode) {
+      case IN_MEMORY:
+        // In SDK mode we return an InMemorySparkProgramRunner that contains the SparkProgramRunner that
+        // actually runs the Spark program
+        return new InMemorySparkProgramRunner(injector, createProgramRunner(type, Mode.LOCAL, injector));
       case LOCAL:
         // Rewrite YarnClient based on config. The LOCAL runner is used in both SDK and distributed mode
         // The actual mode that Spark is running is determined by the cdap.spark.cluster.mode attribute
@@ -99,7 +103,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
             // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
             // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
             return createSparkProgramRunner(createRunnerInjector(injector, classLoader),
-                                            InMemorySparkProgramRunner.class.getName(), classLoader);
+                                            SparkProgramRunner.class.getName(), classLoader);
           } catch (Throwable t) {
             // If there is any exception, close the classloader
             Closeables.closeQuietly(classLoader);

@@ -117,7 +117,7 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(WorkerProgramRunner.class);
 
     // ProgramRunnerFactory should be in local mode
-    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.IN_MEMORY);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.
     expose(ProgramRunnerFactory.class);

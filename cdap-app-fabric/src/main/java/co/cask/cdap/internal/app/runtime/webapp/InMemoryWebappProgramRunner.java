@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.webapp;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -30,24 +27,10 @@ import com.google.inject.Provider;
  * For running {@link WebappProgramRunner}. Only used in-memory / standalone.
  */
 public class InMemoryWebappProgramRunner extends AbstractInMemoryProgramRunner {
-  private final Provider<WebappProgramRunner> webappProgramRunnerProvider;
-
   @Inject
   public InMemoryWebappProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter,
-                                   Provider<WebappProgramRunner> webappProgramRunnerProvider) {
-    super(cConf, programStateWriter);
-    this.webappProgramRunnerProvider = webappProgramRunnerProvider;
-  }
-
-  @Override
-  public ProgramController run(Program program, ProgramOptions options) {
-    ProgramRunner runner = createProgramRunner();
-    return addStateChangeListener(runner.run(program, options));
-  }
-
-  @Override
-  protected ProgramRunner createProgramRunner() {
-    return webappProgramRunnerProvider.get();
+                                     Provider<WebappProgramRunner> webappProgramRunnerProvider) {
+    super(cConf, webappProgramRunnerProvider.get(), programStateWriter);
   }
 }
 

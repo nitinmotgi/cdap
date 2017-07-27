@@ -22,7 +22,6 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
@@ -37,14 +36,10 @@ import org.apache.twill.api.RunId;
  * For running {@link Service}. Only used in in-memory/standalone mode.
  */
 public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner {
-
-  private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
-
   @Inject
   InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider,
                                ProgramStateWriter programStateWriter) {
-    super(cConf, programStateWriter);
-    this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
+    super(cConf, serviceProgramRunnerProvider.get(), programStateWriter);
   }
 
   @Override
@@ -62,11 +57,6 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
 
     // RunId for the service
     RunId runId = ProgramRunners.getRunId(options);
-    return startAll(program, options, runId, serviceSpec.getInstances());
-  }
-
-  @Override
-  protected ProgramRunner createProgramRunner() {
-    return serviceProgramRunnerProvider.get();
+    return runAll(program, options, runId, serviceSpec.getInstances());
   }
 }

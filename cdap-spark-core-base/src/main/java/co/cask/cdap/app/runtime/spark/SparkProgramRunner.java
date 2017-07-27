@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
@@ -38,6 +39,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.program.StateChangeListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -79,7 +81,8 @@ import javax.annotation.Nullable;
 /**
  * The {@link ProgramRunner} that executes Spark program.
  */
-final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implements Closeable {
+final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
+  implements ProgramClassLoaderProvider, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
@@ -200,6 +203,11 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin implement
       closeAll(closeables);
       throw Throwables.propagate(t);
     }
+  }
+
+  @Override
+  public ClassLoader createProgramClassLoaderParent() {
+    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
   }
 
   /**

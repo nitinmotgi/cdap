@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
@@ -75,6 +76,11 @@ final class ArtifactClassLoaderFactory {
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
       programRunner = programRunnerFactory.create(ProgramType.SPARK);
+
+      // The InMemoryProgramRunner could return a ProgramRunner that implements ProgramClassLoaderProvider
+      if (programRunner instanceof AbstractInMemoryProgramRunner) {
+        programRunner = ((AbstractInMemoryProgramRunner) programRunner).getProgramRunner();
+      }
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
       LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);

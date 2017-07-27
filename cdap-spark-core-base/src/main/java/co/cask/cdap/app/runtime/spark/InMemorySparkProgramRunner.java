@@ -16,45 +16,31 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
+import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- *
+ * For running {@link SparkProgramRunner}. Only used in-memory / standalone.
  */
-public class InMemorySparkProgramRunner extends AbstractInMemoryProgramRunner implements ProgramClassLoaderProvider {
-  private final Provider<SparkProgramRunner> sparkProgramRunnerProvider;
+public class InMemorySparkProgramRunner extends AbstractInMemoryProgramRunner {
 
-  @Inject
-  public InMemorySparkProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter,
-                                    Provider<SparkProgramRunner> sparkProgramRunnerProvider) {
-    super(cConf, programStateWriter);
-    this.sparkProgramRunnerProvider = sparkProgramRunnerProvider;
+  private static final Logger LOG = LoggerFactory.getLogger(InMemorySparkProgramRunner.class);
+
+  private final CConfiguration cConf;
+
+  public InMemorySparkProgramRunner(Injector injector, ProgramRunner runner) {
+    this(injector.getInstance(CConfiguration.class), injector.getInstance(ProgramStateWriter.class), runner);
   }
 
-  @Override
-  public ProgramController run(Program program, ProgramOptions options) {
-    ProgramRunner runner = createProgramRunner();
-    return addStateChangeListener(runner.run(program, options));
-  }
-
-  @Override
-  protected ProgramRunner createProgramRunner() {
-    return sparkProgramRunnerProvider.get();
-  }
-
-  @Override
-  public ClassLoader createProgramClassLoaderParent() {
-    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+  private InMemorySparkProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter,
+                                     ProgramRunner runner) {
+    super(cConf, runner, programStateWriter);
+    this.cConf = cConf;
   }
 }
 

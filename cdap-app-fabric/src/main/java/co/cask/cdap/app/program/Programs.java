@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
+import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -54,8 +55,15 @@ public final class Programs {
                                ProgramDescriptor programDescriptor,
                                Location programJarLocation, File unpackedDir) throws IOException {
     ClassLoader parentClassLoader;
-    if (programRunner instanceof ProgramClassLoaderProvider) {
-      parentClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent();
+    ProgramRunner innerProgramRunner = programRunner;
+
+    // An InMemoryProgramRunner could also create a ProgramRunner that implements ProgramClassLoaderProvider
+    if (programRunner instanceof AbstractInMemoryProgramRunner) {
+      innerProgramRunner = ((AbstractInMemoryProgramRunner) programRunner).getProgramRunner();
+    }
+
+    if (innerProgramRunner instanceof ProgramClassLoaderProvider) {
+      parentClassLoader = ((ProgramClassLoaderProvider) innerProgramRunner).createProgramClassLoaderParent();
     } else {
       parentClassLoader = FilterClassLoader.create(Programs.class.getClassLoader());
     }

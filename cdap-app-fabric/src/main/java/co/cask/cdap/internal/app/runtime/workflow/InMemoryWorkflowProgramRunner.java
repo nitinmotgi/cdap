@@ -16,10 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
@@ -30,23 +26,10 @@ import com.google.inject.Provider;
  * For running {@link WorkflowProgramRunner}. Only used in-memory / standalone.
  */
 public class InMemoryWorkflowProgramRunner extends AbstractInMemoryProgramRunner {
-  private final Provider<WorkflowProgramRunner> workflowProgramRunnerProvider;
 
   @Inject
   public InMemoryWorkflowProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter,
-                                     Provider<WorkflowProgramRunner> workflowProgramRunnerProvider) {
-    super(cConf, programStateWriter);
-    this.workflowProgramRunnerProvider = workflowProgramRunnerProvider;
-  }
-
-  @Override
-  public ProgramController run(Program program, ProgramOptions options) {
-    ProgramRunner runner = createProgramRunner();
-    return addStateChangeListener(runner.run(program, options));
-  }
-
-  @Override
-  protected ProgramRunner createProgramRunner() {
-    return workflowProgramRunnerProvider.get();
+                                       Provider<WorkflowProgramRunner> workflowProgramRunnerProvider) {
+    super(cConf, workflowProgramRunnerProvider.get(), programStateWriter);
   }
 }

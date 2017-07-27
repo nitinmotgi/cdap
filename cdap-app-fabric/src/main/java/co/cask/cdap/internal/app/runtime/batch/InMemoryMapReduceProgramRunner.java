@@ -16,10 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
@@ -30,23 +26,9 @@ import com.google.inject.Provider;
  * For running {@link MapReduceProgramRunner}. Only used in-memory / standalone.
  */
 public class InMemoryMapReduceProgramRunner extends AbstractInMemoryProgramRunner {
-  private final Provider<MapReduceProgramRunner> mapReduceProgramRunnerProvider;
-
   @Inject
   public InMemoryMapReduceProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter,
-                                       Provider<MapReduceProgramRunner> mapReduceProgramRunnerProvider) {
-    super(cConf, programStateWriter);
-    this.mapReduceProgramRunnerProvider = mapReduceProgramRunnerProvider;
-  }
-
-  @Override
-  public ProgramController run(Program program, ProgramOptions options) {
-    ProgramRunner runner = createProgramRunner();
-    return addStateChangeListener(runner.run(program, options));
-  }
-
-  @Override
-  protected ProgramRunner createProgramRunner() {
-    return mapReduceProgramRunnerProvider.get();
+                                        Provider<MapReduceProgramRunner> mapReduceProgramRunnerProvider) {
+    super(cConf, mapReduceProgramRunnerProvider.get(), programStateWriter);
   }
 }

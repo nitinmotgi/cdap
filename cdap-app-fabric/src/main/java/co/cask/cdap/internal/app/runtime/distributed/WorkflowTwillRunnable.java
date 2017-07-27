@@ -59,7 +59,7 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
         // The actual execution mode of the job is governed by the framework configuration
         // For mapreduce, it's in the mapred-site.xml
         // for spark, it's in the hConf we shipped from DistributedWorkflowProgramRunner
-        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.IN_MEMORY);
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
         expose(ProgramRunnerFactory.class);
       }

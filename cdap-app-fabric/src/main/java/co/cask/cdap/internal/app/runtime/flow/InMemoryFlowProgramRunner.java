@@ -16,10 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
@@ -30,24 +26,11 @@ import com.google.inject.Provider;
  * For running {@link FlowProgramRunner}. Only used in-memory / standalone.
  */
 public class InMemoryFlowProgramRunner extends AbstractInMemoryProgramRunner {
-  private final Provider<FlowProgramRunner> flowProgramRunnerProvider;
 
   @Inject
   public InMemoryFlowProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter,
                                    Provider<FlowProgramRunner> flowProgramRunnerProvider) {
-    super(cConf, programStateWriter);
-    this.flowProgramRunnerProvider = flowProgramRunnerProvider;
-  }
-
-  @Override
-  public ProgramController run(Program program, ProgramOptions options) {
-    ProgramRunner runner = createProgramRunner();
-    return addStateChangeListener(runner.run(program, options));
-  }
-
-  @Override
-  protected ProgramRunner createProgramRunner() {
-    return flowProgramRunnerProvider.get();
+    super(cConf, flowProgramRunnerProvider.get(), programStateWriter);
   }
 }
 

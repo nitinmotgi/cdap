@@ -47,7 +47,7 @@ public interface ProgramRuntimeProvider {
    * The execution mode of the program runtime system.
    */
   enum Mode {
-    LOCAL, DISTRIBUTED
+    IN_MEMORY, LOCAL, DISTRIBUTED
   }
 
   /**
