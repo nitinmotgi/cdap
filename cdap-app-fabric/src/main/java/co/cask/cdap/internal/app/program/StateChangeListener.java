@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 
 /**
- * Abstract implementation of {@link AbstractProgramController} that responds to state transitions and persists all
- * state changes.
+ * A listener that responds to state transitions and persists all state changes using a provided
+ * {@link ProgramStateWriter}.
  */
 public class StateChangeListener extends AbstractListener {
   private static final Logger LOG = LoggerFactory.getLogger(StateChangeListener.class);

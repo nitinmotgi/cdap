@@ -31,8 +31,7 @@ import com.google.inject.Provider;
 /**
  *
  */
-public class InMemorySparkProgramRunner extends AbstractInMemoryProgramRunner {
-  // implements ProgramClassLoaderProvider {
+public class InMemorySparkProgramRunner extends AbstractInMemoryProgramRunner implements ProgramClassLoaderProvider {
   private final Provider<SparkProgramRunner> sparkProgramRunnerProvider;
 
   @Inject
@@ -53,9 +52,9 @@ public class InMemorySparkProgramRunner extends AbstractInMemoryProgramRunner {
     return sparkProgramRunnerProvider.get();
   }
 
-//  @Override
-//  public ClassLoader createProgramClassLoaderParent() {
-//    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
-//  }
+  @Override
+  public ClassLoader createProgramClassLoaderParent() {
+    return new FilterClassLoader(getClass().getClassLoader(), SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+  }
 }
 

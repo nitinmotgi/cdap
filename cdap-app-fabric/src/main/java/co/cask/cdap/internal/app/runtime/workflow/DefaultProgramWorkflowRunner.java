@@ -162,10 +162,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       throw t;
     }
 
-    controller.addListener(
-      new StateChangeListener(program.getId().run(runId), twillRunId, programStateWriter),
-      Threads.SAME_THREAD_EXECUTOR
-    );
     blockForCompletion(closeable, controller);
 
     if (controller instanceof WorkflowTokenProvider) {
