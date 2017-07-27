@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 
 /**
@@ -27,6 +28,25 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
  */
 public abstract class DynamicPartitioner<K, V> {
 
+  /**
+   * Defines what to allow when writing to a partition.
+   */
+  public enum PartitionWriteOption {
+    /**
+     * Will only allow writing to a new partition. If an attempt is made to write to a previously-existing partition,
+     * a {@link DataSetException} will be thrown.
+     */
+    NEW_ONLY,
+    /**
+     * Allows appending to an existing partition. If the partition does not already exist, it will be created.
+     */
+    ALLOW_APPEND,
+    /**
+     * Overwrites the existing contents of the partition being written to. If the partition does not already exist, it
+     * will be created.
+     */
+    OVERWRITE
+  }
 
   /**
    *  Initializes a DynamicPartitioner.

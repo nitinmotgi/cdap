@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -860,19 +861,28 @@ public class PartitionedFileSetDataset extends AbstractDataset
           "Either a Partition key or a DynamicPartitioner class must be given as a runtime argument.");
       }
 
-      // propagate output metadata into OutputFormatConfiguration so DynamicPartitionerOutputCommitter can assign
-      // the metadata when it creates the partitions
-      Map<String, String> outputMetadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
-      PartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, outputMetadata);
+      copyDynamicPartitionerArguments(runtimeArguments, outputArgs);
 
-      PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
-      PartitionedFileSetArguments.setDynamicPartitionerConcurrency(
-        outputArgs, PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(runtimeArguments));
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
     }
     return ImmutableMap.copyOf(outputArgs);
+  }
+
+  private void copyDynamicPartitionerArguments(Map<String, String> toMap, Map<String, String> fromMap) {
+    String dynamicPartitionerClassName = PartitionedFileSetArguments.getDynamicPartitioner(fromMap);
+    DynamicPartitioner.PartitionWriteOption partitionWriteOption =
+      PartitionedFileSetArguments.getDynamicPartitionerWriteOption(fromMap);
+    PartitionedFileSetArguments.setDynamicPartitioner(toMap, dynamicPartitionerClassName, partitionWriteOption);
+
+    PartitionedFileSetArguments.setDynamicPartitionerConcurrency(
+      toMap, PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(fromMap));
+
+    // propagate output metadata into OutputFormatConfiguration so DynamicPartitionerOutputCommitter can assign
+    // the metadata when it creates the partitions
+    Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(fromMap);
+    PartitionedFileSetArguments.setOutputPartitionMetadata(toMap, metadata);
   }
 
   private void checkNotExternal() {
