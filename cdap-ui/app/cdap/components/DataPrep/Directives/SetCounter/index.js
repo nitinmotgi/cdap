@@ -21,6 +21,8 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import {preventPropagation} from 'services/helpers';
+import Mousetrap from 'mousetrap';
 
 require('./SetCounter.scss');
 
@@ -43,11 +45,15 @@ export default class SetCounterDirective extends Component {
       'ALWAYS',
       'IFCONDITION'
     ];
-
   }
 
+
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('set-counter-directive'));
+    let directiveElem = document.getElementById('set-counter-directive');
+    this.calculateOffset = setPopoverOffset.bind(this, directiveElem);
+
+    this.mousetrap = new Mousetrap(directiveElem);
+    this.mousetrap.bind('enter', this.applyDirective);
   }
 
   componentDidUpdate() {
@@ -56,10 +62,9 @@ export default class SetCounterDirective extends Component {
     }
   }
 
-  preventPropagation(e) {
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-    e.preventDefault();
+  componentWillUnmount() {
+    this.mousetrap.reset();
+    delete this.mousetrap;
   }
 
   handleStateValueChange(key, e) {
@@ -71,6 +76,8 @@ export default class SetCounterDirective extends Component {
   applyDirective() {
     let variableName = this.state.variableName;
     let incrementBy = this.state.incrementBy;
+
+    if (!variableName || !incrementBy) { return; }
 
     let expression = this.state.selectedCondition === 'ALWAYS' ? 'true' : this.state.ifCondition;
 
@@ -159,7 +166,7 @@ export default class SetCounterDirective extends Component {
 
         <input
           type="text"
-          className="form-control"
+          className="form-control mousetrap"
           value={this.state.variableName}
           onChange={this.handleStateValueChange.bind(this, 'variableName')}
           placeholder={T.translate(`${PREFIX}.variableNamePlaceholder`)}
@@ -176,7 +183,7 @@ export default class SetCounterDirective extends Component {
     return (
       <div
         className="set-variable-detail second-level-popover"
-        onClick={this.preventPropagation}
+        onClick={preventPropagation}
       >
         {this.renderCondition()}
 

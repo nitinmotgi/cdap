@@ -22,6 +22,7 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import Mousetrap from 'mousetrap';
+import {preventPropagation} from 'services/helpers';
 
 require('./DefineVariable.scss');
 
@@ -56,8 +57,11 @@ export default class DefineVariableDirective extends Component {
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('set-variable-directive'));
-    Mousetrap.bind('enter', this.applyDirective);
+    let directiveElem = document.getElementById('set-variable-directive');
+    this.calculateOffset = setPopoverOffset.bind(this, directiveElem);
+
+    this.mousetrap = new Mousetrap(directiveElem);
+    this.mousetrap.bind('enter', this.applyDirective);
   }
 
   componentDidUpdate() {
@@ -67,13 +71,8 @@ export default class DefineVariableDirective extends Component {
   }
 
   componentWillUnmount() {
-    Mousetrap.unbind('enter', this.applyDirective);
-  }
-
-  preventPropagation(e) {
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-    e.preventDefault();
+    this.mousetrap.reset();
+    delete this.mousetrap;
   }
 
   handleStateValueChange(key, e) {
@@ -95,6 +94,8 @@ export default class DefineVariableDirective extends Component {
     let variableName = this.state.variableName;
     let selectedColumn = this.state.selectedColumn;
     let directive;
+
+    if (!textValue || !variableName) { return; }
 
     switch (this.state.selectedCondition) {
       case 'TEXTCONTAINS':
@@ -323,7 +324,7 @@ export default class DefineVariableDirective extends Component {
     return (
       <div
         className="set-variable-detail second-level-popover"
-        onClick={this.preventPropagation}
+        onClick={preventPropagation}
       >
         {this.renderCondition()}
 
